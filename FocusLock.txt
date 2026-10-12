@@ -1,0 +1,1762 @@
+ ▐▛███▛█   Claude Code v2.1.296
+▝▜██████▀  Opus 5.5 · Claude Max
+ ▝▝   ▝▝   ~\Desktop\Experiments\FocusLockQt
+
+
+❯ Can you access QT ? (simple yes or no answer)                                 
+
+● PowerShell(Get-Command qmake, qmake6, designer, qtcreator -ErrorAction
+            SilentlyContinue | Select-Object Name, Source; Test-Path C:\Qt;
+            python -c "import PyQt5" 2>$null; "p…)
+  ⎿  Error: Exit code 1
+     True
+     pyqt5:False
+     pyside6:False
+     pyqt6:False
+
+● Yes. There's a Qt installation at C:\Qt that I can reach. Its tools (like
+  qmake) aren't on your PATH, and there are no Python Qt bindings installed
+  (PyQt5, PyQt6 or PySide6). If you meant a QT app or service rather than the Qt
+  framework, then no, I don't have a connector for that.
+
+✻ Baked for 14s · done 3:20 AM
+
+❯ It was for C++ not python, check again and (yes and no answers only)          
+
+● PowerShell(Get-ChildItem C:\Qt -Directory | Select-Object Name; Get-ChildItem
+            C:\Qt -Recurse -Filter qmake*.exe -ErrorAction SilentlyContinue
+            -Depth 4 | Select-Object Full…)
+  ⎿  Name
+     ----
+     6.12.0
+     … +10 lines (ctrl+o to expand)
+
+● PowerShell(Get-ChildItem C:\Qt\6.12.0, C:\Qt\6.8.7 -Directory | Select-Object
+            FullName; Get-ChildItem C:\Qt\6.*\*\bin -Filter *.exe -ErrorAction
+            SilentlyContinue | Select-…)
+  ⎿  FullName
+     --------
+     C:\Qt\6.12.0\android_arm64_v8a
+     … +5 lines (ctrl+o to expand)
+
+● PowerShell(Get-ChildItem C:\Qt\6.12.0\mingw_64, C:\Qt\6.8.7\mingw_64 |
+            Select-Object FullName; (Get-ChildItem C:\Qt\Tools -ErrorAction
+            SilentlyContinue).Name)
+  ⎿  FullName
+     --------
+     C:\Qt\6.12.0\mingw_64\bin
+     … +54 lines (ctrl+o to expand)
+
+● PowerShell(Test-Path C:\Qt\6.12.0\mingw_64\bin\qmake.exe,
+            C:\Qt\6.12.0\mingw_64\bin\qt-cmake.bat,
+            C:\Qt\Tools\mingw1310_64\bin\g++.exe; &
+            C:\Qt\6.12.0\mingw_64\bin\qmake.e…)
+  ⎿  True
+     True
+     True
+     … +2 lines (ctrl+o to expand)
+
+● Yes.
+
+✻ Cogitated for 27s · done 3:21 AM
+
+※ recap: You wanted to know if I can use your C++ Qt install, and I can: Qt 6.12.0 (MinGW) at C:\Qt, and qmake runs. Next, tell me what you want to build with it. (disable recaps in /config)
+
+❯ Build a C++20 desktop app named "FocusLock" using Qt 6 (Widgets/QML) with a   
+  modern dark UI inspired by Rize.                                              
+                                                                                
+  Core Specifications:                                                          
+  1. App Watchlist: User selects target .exe files and configures countdown     
+  timers.                                                                       
+  2. Tracking Engine: Background worker uses CreateToolhelp32Snapshot to        
+  monitor active target processes and countdown active session timers.          
+  3. Overlay Dialog: When a target's timer hits zero, spawn a topmost           
+  (Qt::WindowStaysOnTopHint), frameless dialog positioned relative to the       
+  target window (GetWindowRect).                                                
+  4. Dismissal Condition: Keep overlay visible until target process termination 
+  is detected via EnumWindows/process polling.                                  
+  5. UI Styling: Modern dark palette (#121212 background, sleek cards, clean    
+  typography).                                                                  
+                                                                                
+  Output: Complete CMake project (CMakeLists.txt), main application, process    
+  monitor class, and Qt UI code.                                                
+
+● PowerShell(Get-ChildItem C:\Users\Toshit\Desktop\Experiments | Select-Object
+            Name; Get-ChildItem C:\Qt\Tools\mingw1310_64\bin\g++.exe,
+            C:\Qt\Tools\CMake_64\bin\cmake.exe,…)
+  ⎿  Name
+     ----
+     FocusLock
+
+  Listed 1 directory (ctrl+o to expand)
+
+● There's already a C# FocusLock in Experiments\FocusLock, so I'll leave it
+  alone and put the Qt/C++ version in Experiments\FocusLockQt.
+
+● Write(CMakeLists.txt)
+  ⎿  Wrote 66 lines to CMakeLists.txt
+       1 cmake_minimum_required(VERSION 3.21)
+       2 
+       3 project(FocusLock
+       4     VERSION 1.0.0
+       5     DESCRIPTION "Per-app time budgets with a lock overlay"
+       7 
+       8 if(NOT WIN32)
+       9     message(FATAL_ERROR "FocusLock uses the Win32 API and only b
+         uilds on Windows.")
+      10 endif()
+     … +62 lines (ctrl+o to expand)
+
+● Update(CMakeLists.txt)
+  ⎿  Added 1 line, removed 2 lines
+      33  )
+      34  
+      35  target_compile_definitions(FocusLock PRIVATE
+      36 -    UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN              
+      37 -    QT_NO_KEYWORDS_DISABLED)                                   
+      36 +    UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN)             
+      37  
+      38  target_link_libraries(FocusLock PRIVATE
+      39      Qt6::Widgets
+
+● Write(src\WatchTypes.h)
+  ⎿  Wrote 53 lines to src\WatchTypes.h
+       1 #pragma once
+       2 
+       3 #include <QList>
+       4 #include <QMetaType>
+       5 #include <QString>
+       6 
+       7 #include <algorithm>
+       8 
+       9 // One app on the watchlist, as configured by the user.
+      10 struct WatchItem {
+     … +52 lines (ctrl+o to expand)
+
+● Write(src\WinUtil.h)
+  ⎿  Wrote 41 lines to src\WinUtil.h
+       1 #pragma once
+       2 
+       3 #include <QHash>
+       4 #include <QList>
+       5 #include <QRect>
+       7 
+       8 #include <optional>
+       9 
+      10 // Thin wrappers over the Win32 calls FocusLock needs. Window ha
+         ndles are passed
+     … +39 lines (ctrl+o to expand)
+
+● Write(src\WinUtil.cpp)
+  ⎿  Wrote 191 lines to src\WinUtil.cpp
+       1 #include "WinUtil.h"
+       2 
+       3 #include <QSet>
+       4 
+       5 #include <windows.h>
+       6 #include <dwmapi.h>
+       7 #include <tlhelp32.h>
+       8 
+       9 #include <functional>
+      10 #include <limits>
+     … +201 lines (ctrl+o to expand)
+
+● Write(src\ProcessMonitor.h)
+  ⎿  Wrote 45 lines to src\ProcessMonitor.h
+       1 #pragma once
+       2 
+       3 #include "WatchTypes.h"
+       4 
+       5 #include <QElapsedTimer>
+       7 
+       8 class QTimer;
+       9 
+      10 // Lives on a worker thread. Once a second it snapshots the proc
+         ess list,
+     … +40 lines (ctrl+o to expand)
+
+● Write(src\ProcessMonitor.cpp)
+  ⎿  Wrote 96 lines to src\ProcessMonitor.cpp
+       1 #include "ProcessMonitor.h"
+       2 
+       3 #include "WinUtil.h"
+       4 
+       5 #include <QTimer>
+       7 namespace {
+       8 constexpr int kTickMs = 1000;
+       9 // Cap per-tick drain so waking from sleep/hibernate doesn't ins
+         tantly lock everything.
+      10 constexpr qint64 kMaxDrainMs = 5000;
+     … +92 lines (ctrl+o to expand)
+
+● Write(src\OverlayDialog.h)
+  ⎿  Wrote 52 lines to src\OverlayDialog.h
+      1 #pragma once
+      2 
+      3 #include <QDialog>
+      4 #include <QIcon>
+      5 #include <QTimer>
+      6 
+      7 class QFrame;
+      8 class QLabel;
+      9 class QPushButton;
+     … +48 lines (ctrl+o to expand)
+● Write(src\OverlayDialog.cpp)
+  ⎿  Wrote 201 lines to src\OverlayDialog.cpp
+       1 #include "OverlayDialog.h"
+       2 
+       3 #include "WatchTypes.h"
+       4 #include "WinUtil.h"
+       5 
+       6 #include <QCloseEvent>
+       7 #include <QFrame>
+       8 #include <QGraphicsDropShadowEffect>
+       9 #include <QHBoxLayout>
+      10 #include <QLabel>
+     … +207 lines (ctrl+o to expand)
+
+● Write(src\WatchCard.h)
+  ⎿  Wrote 38 lines to src\WatchCard.h
+       1 #pragma once
+       2 
+       3 #include "WatchTypes.h"
+       4 
+       5 #include <QFrame>
+       6 #include <QIcon>
+       7 
+       8 class QLabel;
+       9 class QProgressBar;
+      10 class QSpinBox;
+     … +30 lines (ctrl+o to expand)
+
+● Write(src\WatchCard.cpp)
+  ⎿  Wrote 174 lines to src\WatchCard.cpp
+      1 #include "WatchCard.h"
+      2 
+      3 #include <QHBoxLayout>
+      4 #include <QLabel>
+      5 #include <QProgressBar>
+      6 #include <QSpinBox>
+      7 #include <QStyle>
+      8 #include <QToolButton>
+      9 #include <QVBoxLayout>
+     … +171 lines (ctrl+o to expand)
+
+● Now the theme, main window and entry point.
+
+● Write(src\Theme.h)
+  ⎿  Wrote 155 lines to src\Theme.h
+      1 #pragma once
+      2 
+      3 #include <QColor>
+      4 #include <QIcon>
+      5 #include <QLinearGradient>
+      6 #include <QPainter>
+      7 #include <QPalette>
+      8 #include <QPixmap>
+      9 #include <QString>
+     … +182 lines (ctrl+o to expand)
+
+● Write(src\MainWindow.h)
+  ⎿  Wrote 61 lines to src\MainWindow.h
+       1 #pragma once
+       2 
+       3 #include "WatchTypes.h"
+       4 
+       5 #include <QHash>
+       6 #include <QMainWindow>
+       7 #include <QPointer>
+       8 #include <QThread>
+       9 
+      10 class OverlayDialog;
+     … +54 lines (ctrl+o to expand)
+
+● Write(src\MainWindow.cpp)
+  ⎿  Wrote 370 lines to src\MainWindow.cpp
+       1 #include "MainWindow.h"
+       2 
+       3 #include "OverlayDialog.h"
+       4 #include "ProcessMonitor.h"
+       5 #include "Theme.h"
+       6 #include "WatchCard.h"
+       7 #include "WinUtil.h"
+       8 
+       9 #include <QApplication>
+      10 #include <QCloseEvent>
+     … +386 lines (ctrl+o to expand)
+
+● Update(src\MainWindow.cpp)
+  ⎿  Added 2 lines, removed 6 lines
+      217  
+      218  void MainWindow::pickApp()
+      219  {
+      220 -    const QString start = QStandardPaths::writableLocation(QSt
+          -andardPaths::ApplicationsLocation)                            
+      221 -                              .isEmpty()                      
+      222 -        ? QString("C:/Program Files")                         
+      223 -        : QString("C:/Program Files");                        
+      224 -    const QString path = QFileDialog::getOpenFileName(this, "C
+          -hoose an app to watch", start,                                
+      225 -                                                      "Applica
+          -tions (*.exe)");                                              
+      220 +    const QString path = QFileDialog::getOpenFileName(this, "C
+          +hoose an app to watch",                                       
+      221 +                                                      "C:/Prog
+          +ram Files", "Applications (*.exe)");                          
+      222      if (path.isEmpty())
+      223          return;
+      224  
+
+● Update(src\MainWindow.cpp)
+  ⎿  Removed 1 line
+      19  #include <QPushButton>
+      20  #include <QScrollArea>
+      21  #include <QSettings>
+      22 -#include <QStandardPaths>                                      
+      22  #include <QSystemTrayIcon>
+      23  #include <QVBoxLayout>
+      24  
+
+● Update(src\ProcessMonitor.cpp)
+  ⎿  Added 2 lines
+       4  
+       5  #include <QTimer>
+       6  
+       7 +#include <utility>                                             
+       8 +                                                               
+       9  namespace {
+      10  constexpr int kTickMs = 1000;
+      11  // Cap per-tick drain so waking from sleep/hibernate doesn't in
+          stantly lock everything.
+
+● Write(src\main.cpp)
+  ⎿  Wrote 34 lines to src\main.cpp
+       1 #include "MainWindow.h"
+       2 #include "Theme.h"
+       3 #include "WatchTypes.h"
+       4 
+       5 #include <QApplication>
+       6 #include <QStyleFactory>
+       7 #include <QStyleHints>
+       8 
+       9 int main(int argc, char* argv[])
+      10 {
+     … +25 lines (ctrl+o to expand)
+
+● Bash(cd /c/Users/Toshit/Desktop/Experiments/FocusLockQt && export PATH="/c/Qt/
+      Tools/mingw1310_64/bin:/c/Qt/Tools/CMake_64/bin:/c/Qt/Tools/Ninja:$PATH"
+      && cmake -S .…)
+  ⎿  -- Found WrapAtomic: TRUE
+     -- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR)
+     -- Configuring done (15.2s)
+     … +42 lines (ctrl+o to expand)
+  ⎿  (timeout 10m)
+
+● It builds. Let me check for compiler warnings, then do a smoke test with
+  Notepad as the target and a short budget.
+
+● Bash(export PATH="/c/Qt/Tools/mingw1310_64/bin:/c/Qt/Tools/CMake_64/bin:/c/Qt/
+      Tools/Ninja:$PATH" && touch src/*.cpp && cmake --build build 2>&1 | grep
+      -iE "warning|e…)
+  ⎿  -rwxr-xr-x 1 Toshit 197121 472353 Oct 11 03:38 build/FocusLock.exe
+  ⎿  (timeout 10m)
+
+● No warnings. Now a live test: I'll put Notepad on the watchlist with a
+  1-minute budget, run both, and take screenshots before and after the lock.
+
+● PowerShell($k='HKCU:\Software\FocusLock\FocusLock'
+            $existing = Test-Path $k…)
+  ⎿  settings existed before: False
+
+     Name         Id MainWindowTitle
+     … +3 lines (ctrl+o to expand)
+
+● PowerShell($shot = @'
+            param($out)…)
+  ⎿  (No output)
+
+  Read 1 file (ctrl+o to expand)
+
+● The countdown and styling work. One bug: the minutes field is empty (the "1
+  min" text is clipped). I'll fix that after checking the lock.
+
+● PowerShell(Start-Sleep 50; $dir =
+            "C:\Users\Toshit\AppData\Local\Temp\claude\C--Users-Toshit-Desktop-E
+            xperiments\9eebfe11-80e0-4706-9587-48b340d7ec32\scratchpad";
+            powershe…)
+  ⎿  Error: Blocked: Start-Sleep 50 followed by: $dir = 
+     "C:\Users\Toshit\AppData\Local\Temp\claude\C--Users-Toshit-Desktop-Experime
+     nts\9eebfe11-80e0-4706-9587-48b340d7ec32\scratchpad"; powershell -NoProfile
+     -File "$dir\shot.ps1" "$dir\locked.png". To wait for a condition, use 
+     Monitor with an until-loop (e.g. `until <check>; do sleep 2; done` — 
+     Monitor runs bash). To wait for a command you started, use 
+     run_in_background: true. Do not chain shorter sleeps to work around this 
+     block.
+
+  Read 1 file (ctrl+o to expand)
+
+● PowerShell($dir = "C:\Users\Toshit\AppData\Local\Temp\claude\C--Users-Toshit-D
+            esktop-Experiments\9eebfe11-80e0-4706-9587-48b340d7ec32\scratchpad";
+            powershell -NoProfile -F…)
+  ⎿  (No output)
+
+  Read 1 file (ctrl+o to expand)
+
+● Bash(sleep 35; powershell -NoProfile -File
+      "C:/Users/Toshit/AppData/Local/Temp/claude/C--Users-Toshit-Desktop-Experim
+      ents/9eebfe11-80e0-4706-9587-48b340d7ec32/scratc…)  ⎿  Running in the background (↓ to manage)
+
+● Meanwhile, the spinbox fix: the vertical padding is squeezing the text out of
+  the field.
+
+● Update(src\Theme.h)
+  ⎿  Added 1 line, removed 1 line
+      89  QProgressBar[state="warn"]::chunk   { background: #F5A524; }
+      90  QProgressBar[state="locked"]::chunk { background: #F2555A; }
+      91  
+      92 -QSpinBox { background: #232329; border: 1px solid #2E2E36; bord
+         -er-radius: 8px; padding: 4px 6px; selection-background-color: #
+         -7C6CFF; }                                                      
+      92 +QSpinBox { background: #232329; border: 1px solid #2E2E36; bord
+         +er-radius: 8px; padding: 0 4px; min-height: 26px; selection-bac
+         +kground-color: #7C6CFF; }                                      
+      93  QSpinBox:focus { border-color: #7C6CFF; }
+      94  #stepper { background: #232329; border: 1px solid #2E2E36; bord
+          er-radius: 8px; color: #B4B4BE; min-width: 26px; min-height: 26
+          px; font-weight: 600; }
+      95  #stepper:hover { background: #2C2C34; color: #FFFFFF; }
+
+● Update(src\MainWindow.cpp)
+  ⎿  Added 4 lines
+      163      outer->addWidget(section);
+      164      outer->addWidget(scroll, 1);
+      165      outer->addWidget(footer);
+      166 +                                                              
+      167 +    // Don't start with a caret blinking in the first card's b
+          +udget field.                                                  
+      168 +    root->setFocusPolicy(Qt::ClickFocus);                     
+      169 +    root->setFocus();                                         
+      170  }
+      171  
+      172  void MainWindow::setupTray()
+
+  Read 1 file (ctrl+o to expand)
+
+● Waiting for the 1-minute budget to run out so I can capture the lock overlay.
+
+✻ Crunched for 10m 54s · done 3:39 AM
+
+● Background command "Wait for lock then screenshot in background" completed
+(exit code 0)
+
+  Read 1 file (ctrl+o to expand)
+
+● The lock works: the overlay sits exactly on Notepad's window, above everything
+  else. Next I'll check that it goes away once Notepad exits.
+
+● PowerShell((Get-Process Notepad).CloseMainWindow() | Out-Null; Start-Sleep 3;
+            "notepad alive: $([bool](Get-Process Notepad -ErrorAction
+            SilentlyContinue))"; $dir = "C:\Use…)
+  ⎿  notepad alive: False
+
+  Read 1 file (ctrl+o to expand)
+
+● Closing Notepad dismissed the overlay and reset the timer. Now I'll rebuild
+  with the spinbox fix and check it.
+
+● Bash(taskkill //IM FocusLock.exe //F >/dev/null; export PATH="/c/Qt/Tools/ming
+      w1310_64/bin:/c/Qt/Tools/CMake_64/bin:/c/Qt/Tools/Ninja:$PATH" && cmake
+      --build build 2…)
+  ⎿  ok
+  ⎿  (timeout 5m)
+
+  Read 1 file (ctrl+o to expand)
+
+● PowerShell(Get-Process FocusLock | Select-Object Id, StartTime; (Get-Item
+            C:\Users\Toshit\Desktop\Experiments\FocusLockQt\build\FocusLock.exe)
+            .LastWriteTime; Get-Date)
+  ⎿    Id StartTime
+       -- ---------
+     3580 10/11/2026 3:40:44 AM
+
+● Bash(ls -l --time-style=full-iso build/FocusLock.exe; date; grep -n
+      "min-height: 26px; selection" src/Theme.h)
+  ⎿  -rwxr-xr-x 1 Toshit 197121 473303 2026-10-11 03:40:43.731456400 +0530
+     build/FocusLock.exe
+     Sun, Oct 11, 2026  3:41:01 AM
+     … +3 lines (ctrl+o to expand)
+
+● The field is still blank even with the new build, so padding wasn't the cause.
+  I'll test whether the stylesheet's default spin-button sizing is squeezing
+  the edit area.
+
+● Update(src\Theme.h)
+  ⎿  Added 1 line
+      91  
+      92  QSpinBox { background: #232329; border: 1px solid #2E2E36; bord
+          er-radius: 8px; padding: 0 4px; min-height: 26px; selection-bac
+          kground-color: #7C6CFF; }
+      93  QSpinBox:focus { border-color: #7C6CFF; }
+      94 +QSpinBox::up-button, QSpinBox::down-button { width: 0; border: 
+         +none; }                                                        
+      95  #stepper { background: #232329; border: 1px solid #2E2E36; bord
+          er-radius: 8px; color: #B4B4BE; min-width: 26px; min-height: 26
+          px; font-weight: 600; }
+      96  #stepper:hover { background: #2C2C34; color: #FFFFFF; }
+      97  #remove { background: transparent; border: none; color: #6E6E79
+          ; border-radius: 8px; padding: 4px 7px; }
+
+● Bash(taskkill //IM FocusLock.exe //F >/dev/null; export PATH="/c/Qt/Tools/ming
+      w1310_64/bin:/c/Qt/Tools/CMake_64/bin:/c/Qt/Tools/Ninja:$PATH" && cmake
+      --build build 2…)
+  ⎿  ok
+  ⎿  (timeout 5m)
+
+  Read 1 file (ctrl+o to expand)
+
+● Still blank, and the caret sits at the far left, so the inner line edit seems
+  to be collapsing. I'll measure its geometry at runtime instead of guessing.
+
+● Update(src\WatchCard.cpp)
+  ⎿  Added 9 lines
+      128      connect(m_minutes, &QSpinBox::valueChanged, this, &WatchCa
+           rd::limitChanged);
+      129      connect(remove, &QToolButton::clicked, this, &WatchCard::r
+           emoveRequested);
+      130  
+      131 +    QTimer::singleShot(1500, this, [this] { // DEBUG-TEMP     
+      132 +        QFile f(qEnvironmentVariable("TEMP") + "/focuslock_deb
+          +ug.txt");                                                     
+      133 +        f.open(QIODevice::WriteOnly);                         
+      134 +        auto* le = m_minutes->findChild<QLineEdit*>();        
+      135 +        QTextStream(&f) << "spin " << m_minutes->width() << "x
+          +" << m_minutes->height()                                      
+      136 +                        << " edit " << le->geometry().x() << "
+          +," << le->geometry().y() << " "                               
+      137 +                        << le->width() << "x" << le->height() 
+          +<< " text='" << le->text()                                    
+      138 +                        << "' visible=" << le->isVisible() << 
+          +"\n";                                                         
+      139 +    });                                                       
+      140      WatchStatus initial;
+      141      initial.exeName = item.exeName;
+      142      initial.limitSecs = item.limitSecs;
+
+● Update(src\WatchCard.cpp)
+  ⎿  Added 4 lines
+       7  #include <QStyle>
+       8  #include <QToolButton>
+       9  #include <QVBoxLayout>
+      10 +#include <QFile>                                               
+      11 +#include <QLineEdit>                                           
+      12 +#include <QTextStream>                                         
+      13 +#include <QTimer>                                              
+      14  
+      15  namespace {
+      16  
+
+● Bash(taskkill //IM FocusLock.exe //F >/dev/null; export PATH="/c/Qt/Tools/ming
+      w1310_64/bin:/c/Qt/Tools/CMake_64/bin:/c/Qt/Tools/Ninja:$PATH" && cmake
+      --build build 2…)
+  ⎿  spin 76x31 edit 0,1 1x29 text='1 min' visible=1
+  ⎿  (timeout 5m)
+
+● The inner editor is only 1px wide; the text is there but can't be seen. I'll
+  test whether NoButtons is what trips Qt's stylesheet layout.
+
+● Bash(sed -i 's|    m_minutes->setButtonSymbols(QAbstractSpinBox::NoButtons);|
+        // m_minutes->setButtonSymbols(QAbstractSpinBox::NoButtons);|'
+      src/WatchCard.cpp &&…)
+  ⎿  spin 76x31 edit 0,1 76x29 text='1 min' visible=1
+  ⎿  (timeout 5m)
+
+● That was it: with stylesheet-styled spin buttons set to zero width, the editor
+  takes the full 76px. I'll remove the debug code and that line, then take a
+  final look.
+● Bash(python - <<'EOF'
+      import re,io…)
+  ⎿  94:/* Hidden steppers (the &minus;/+ buttons replace them). Using NoBu
+     ttons instead collapses the editor to 1px under a stylesheet. */
+     ok
+  ⎿  (timeout 5m)
+
+  Read 1 file (ctrl+o to expand)
+
+● Fixed. Last step: tidy the comment, close the test instance, remove the test
+  watchlist I added to the registry (there were no settings before), and add a
+  README.
+
+● Bash(sed -i 's|(the &minus;/+ buttons replace them)|(the card has its own -/+
+      buttons)|' src/Theme.h && taskkill //IM FocusLock.exe //F >/dev/null;
+      powershell -NoPro…)
+  ⎿  False
+     build
+     CMakeLists.txt
+     … +2 lines (ctrl+o to expand)
+
+● FocusLock now builds and runs from
+  C:\Users\Toshit\Desktop\Experiments\FocusLockQt. Your existing C# project in
+  Experiments\FocusLock is untouched. It compiles with no warnings on Qt 6.12
+  (MinGW).
+
+  Live test, with Notepad and a 1-minute budget:
+  - Countdown: the timer ran down, the card turned amber and showed "Almost up"
+    near the end, and the stats updated.
+  - Lock: at zero, the overlay covered Notepad's window exactly, stayed above
+    other windows, and showed the "Time's up" card.
+  - Dismissal: after Notepad closed, the overlay disappeared and the timer reset
+    to 01:00.
+  - Bug found and fixed: the minutes box was blank because of a Qt stylesheet
+    quirk. It now shows "1 min" correctly.
+  - Cleanup: I removed the test watchlist from the registry. The app hadn't
+    saved any settings before the test.
+
+  What's in it:
+  - CMakeLists.txt: C++20 and Qt 6 Widgets. After each build it copies the Qt
+    DLLs next to the exe, so you can double-click build\FocusLock.exe.
+  - ProcessMonitor: a background thread that checks running processes once a
+    second with CreateToolhelp32Snapshot and counts down the timers.
+  - WinUtil: finds each app's main window with EnumWindows and gets its position
+    with GetWindowRect, plus a few other Windows helpers.
+  - OverlayDialog: the frameless, always-on-top lock screen. It follows the
+    target window as it moves, and Esc and Alt+F4 don't close it.
+  - MainWindow, WatchCard, Theme.h: the dark Rize-style UI. It has stat tiles,
+    one card per app with a live countdown and −/+ buttons for the time limit, a
+    tray icon, and a saved watchlist.
+
+  Choices I made that the spec didn't cover:
+  - Timer only runs while the app has a window open. Apps hidden in the tray
+    don't use up their time.
+  - The lock also lifts when the app's last window closes, not only when its
+    process ends. Otherwise apps like Discord would stay locked forever while
+    sitting in the tray.
+  - "Close <app>" asks the app to close instead of force-killing it, so it can
+    still offer to save your work. The overlay shrinks to a small card for 15
+    seconds so you can click that save prompt.
+  - Closing the main window keeps FocusLock running in the tray. To exit, use
+    Quit in the tray menu.
+
+  There's one loophole: quitting and reopening an app starts a fresh timer. If
+  you'd rather have a cooldown or a daily total, that's a small change in
+  ProcessMonitor::tick(). Build steps are in README.md.
+
+✻ Cogitated for 3m 30s · done 3:43 AM
+
+❯ before we fix the loop hole I want you to remove the previous work in which   
+  we used C#, So remove anything regarding C#.                                  
+
+● Before deleting, I'll check what's in the C# project and whether it installed
+  anything on the system (it has a Windows service and install scripts), so
+  nothing is left running with its files gone.
+
+● Bash(cd /c/Users/Toshit/Desktop/Experiments/FocusLock && find . -path
+      ./src/*/bin -prune -o -path ./src/*/obj -prune -o -type f -print; du -sh
+      .; echo ---; cat deplo…)
+  ⎿  find: paths must precede expression: `./src/FocusLock.Service/bin'
+     find: possible unquoted pattern after predicate `-path'?
+     58M     .
+     … +65 lines (ctrl+o to expand)
+
+● PowerShell(Get-Service | Where-Object { $_.Name -like '*FocusLock*' -or
+            $_.DisplayName -like '*FocusLock*' } | Select-Object Name,
+            DisplayName, Status, StartType; Get-Proc…)
+  ⎿  False
+     False
+     True
+
+● The service isn't installed, but C:\ProgramData\FocusLock exists. I'll check
+  what's in it and what else the uninstall script cleans up.
+
+  Listed 1 directory (ctrl+o to expand)
+
+● The old C# version left behind a 58 MB project folder and a ProgramData folder
+  with its lock database and recovery file, but nothing is actually installed
+  or running—and the Qt app doesn't use either. I'll delete both leftover
+  folders.
+
+● PowerShell(Set-Location C:\Users\Toshit\Desktop\Experiments; Remove-Item
+            -Recurse -Force C:\Users\Toshit\Desktop\Experiments\FocusLock,
+            C:\ProgramData\FocusLock; Test-Path…)
+  ⎿  Remove-Item : Cannot remove item C:\Users\Toshit\Desktop\Experiments\F
+     ocusLock: The process cannot access the file
+     'C:\Users\Toshit\Desktop\Experiments\FocusLock' because it is being us
+     … +29 lines (ctrl+o to expand)
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● All the C# files are deleted; only the empty folder is left, and something is
+  holding it open. I'll retry from a different shell.
+
+● Bash(rmdir FocusLock && echo removed; ls)
+  ⎿  removed
+     FocusLockQt
+
+● I removed the C# project, but one leftover needs admin rights.
+
+  - Removed: the C# project folder Experiments\FocusLock. All of its files are
+    gone (source, the solution file, the install and uninstall scripts, and 58
+    MB of build output). Experiments now holds only FocusLockQt, which has no C#
+    files.
+  - Not removed: C:\ProgramData\FocusLock, the C# app's data folder. It holds
+    focuslock.db (its lock database) and ALLOW_UNINSTALL.txt. The C# service
+    created it with system-level permissions, so my shell got "access denied".
+
+  To delete it, run this in an administrator PowerShell window:
+
+  Remove-Item -Recurse -Force C:\ProgramData\FocusLock
+
+  Otherwise, nothing from the C# version was left on your system: no service, no
+  Program Files install, no shortcuts and nothing running. The Qt app doesn't
+  use that folder, so we can fix the loophole whether or not you delete it.
+
+✻ Crunched for 1m 13s · done 3:50 AM
+
+❯ Now for the loophole, remnind me what it was (answer in one very short        
+  paragraph)                                                                    
+
+● Closing an app ends its session and refills its budget. So when you get
+  locked, you can close the app, reopen it right away and get the full time
+  back. The timer only stops a session from running long; it doesn't limit total
+  use. The usual fixes are a cooldown before the budget refills, or a daily
+  total.
+
+✻ Worked for 2s · done 3:52 AM
+
+❯ set a cooldown of about 24 Hours for budget refill to all apps.               
+
+● First I'll read the current state of the files I'll change, since Theme.h and
+  WatchCard.cpp were edited by script.
+
+● Bash(cd /c/Users/Toshit/Desktop/Experiments/FocusLockQt && sed -n 1,200p
+      src/WatchCard.cpp | grep -n "" | sed -n 1,20p; grep -n
+      "targetClosed\|onTargetClosed" -r src)
+  ⎿  1:#include "WatchCard.h"
+     2:
+     3:#include <QHBoxLayout>
+     … +23 lines (ctrl+o to expand)
+
+● I'll implement a 24-hour rolling window per app that resets its budget, with
+  used time persisted to disk so restarts or re-adding an app won't reset it,
+  and closing an app no longer refills time—reopening it after the budget's
+  spent locks it immediately.
+
+● Update(src\WatchTypes.h)
+  ⎿  Added 4 lines
+      20      Locked,     // budget exhausted; overlay is up until the ap
+          p closes
+      21  };
+      22  
+      23 +// The budget refills this long after it first starts draining,
+         + not when the app closes.                                      
+      24 +inline constexpr qint64 kRefillCooldownSecs = 24 * 60 * 60;    
+      25 +                                                               
+      26  // Snapshot of one watched app, published by ProcessMonitor eve
+          ry tick.
+      27  struct WatchStatus {
+      28      QString exeName;
+      29      WatchState state = WatchState::Idle;
+      30      int remainingSecs = 0;
+      31      int limitSecs = 0;
+      32 +    qint64 refillAt = 0; // epoch seconds when the budget refil
+         +ls; 0 while untouched                                          
+      33      QList<quint32> pids;
+      34  };
+      35  
+
+● Update(src\WatchTypes.h)
+  ⎿  Added 7 lines
+      55      if (h == 0) return QString("%1 min").arg(m);
+      56      return m == 0 ? QString("%1 h").arg(h) : QString("%1 h %2 m
+          in").arg(h).arg(m);
+      57  }
+      58 +                                                               
+      59 +// Time until an epoch-seconds moment, rounded up to the minute
+         +: "21 h 4 min".                                                
+      60 +inline QString formatTimeUntil(qint64 epochSecs, qint64 nowSecs
+         +)                                                              
+      61 +{                                                              
+      62 +    const qint64 secs = epochSecs - nowSecs;                   
+      63 +    return secs < 60 ? QString("under a minute") : formatBudget
+         +(int(secs + 59));                                              
+      64 +}                                                              
+
+● Write(src\ProcessMonitor.h)
+  ⎿  Added 22 lines, removed 7 lines
+      3  #include "WatchTypes.h"
+      4  
+      5  #include <QElapsedTimer>
+      6 +#include <QHash>                                                
+      7  #include <QObject>
+      8  
+      9  class QTimer;
+     ...
+      12  // counts down the budget of every watched app that has a visib
+          le window,
+      13  // and reports state changes back to the UI thread via queued s
+          ignals.
+      14  //
+      14 -// Session rules:                                              
+      15 +// Budget rules:                                               
+      16  //  - The budget only drains while the app has a visible top-le
+          vel window.
+      16 -//  - A session ends (budget refills) when the app's process ex
+         -its.                                                           
+      17 -//  - Once locked, the lock lifts when the process exits or its
+         - last window closes.                                           
+      17 +//  - It refills kRefillCooldownSecs after it first started dra
+         +ining. Closing the                                             
+      18 +//    app does not refill it, so reopening a spent app locks it
+         + again immediately.                                            
+      19 +//  - The lock lifts when the process exits or its last window 
+         +closes, or when                                                
+      20 +//    the budget refills.                                      
+      21 +//  - Usage is persisted per exe name, so restarting FocusLock 
+         +or removing and                                                
+      22 +//    re-adding an app doesn't reset it.                       
+      23  class ProcessMonitor : public QObject {
+      24      Q_OBJECT
+      25  
+      26  public:
+      27      explicit ProcessMonitor(QObject* parent = nullptr);
+      28 +    ~ProcessMonitor() override;                                
+      29  
+      30  public slots:
+      31      void start();
+     ...
+      33  
+      34  signals:
+      35      void statusUpdated(const QList<WatchStatus>& statuses);
+      30 -    void timeUp(const QString& exeName, const QList<quint32>& p
+         -ids);                                                          
+      31 -    void targetClosed(const QString& exeName);                 
+      36 +    void timeUp(const QString& exeName, const QList<quint32>& p
+         +ids, qint64 refillAt);                                         
+      37 +    void unlocked(const QString& exeName);                     
+      38  
+      39  private:
+      34 -    void tick();                                               
+      40 +    struct Usage {                                             
+      41 +        qint64 usedMs = 0;                                     
+      42 +        qint64 windowStart = 0; // epoch seconds of the first d
+         +rain; 0 = full budget                                          
+      43 +    };                                                         
+      44  
+      45      struct Entry {
+      46          WatchItem item;
+      38 -        qint64 remainingMs = 0;                                
+      47          bool locked = false;
+      48      };
+      49  
+      50 +    void tick();                                               
+      51 +    Usage& usageFor(const QString& key);                       
+      52 +    void saveUsage();                                          
+      53 +                                                               
+      54      QList<Entry> m_entries;
+      55 +    QHash<QString, Usage> m_usage; // keyed by exeKey(); outliv
+         +es watchlist removals                                          
+      56      QTimer* m_timer = nullptr;
+      57      QElapsedTimer m_clock;
+      58 +    int m_ticksSinceSave = 0;                                  
+      59 +    bool m_usageDirty = false;                                 
+      60  };
+
+● Write(src\ProcessMonitor.cpp)  ⎿  Added 73 lines, removed 22 lines
+      2  
+      3  #include "WinUtil.h"
+      4  
+      5 +#include <QDateTime>                                            
+      6 +#include <QSettings>                                            
+      7  #include <QTimer>
+      8  
+      9  #include <utility>
+     ...
+      12  constexpr int kTickMs = 1000;
+      13  // Cap per-tick drain so waking from sleep/hibernate doesn't in
+          stantly lock everything.
+      14  constexpr qint64 kMaxDrainMs = 5000;
+      15 +// Usage is flushed to disk this often while it changes, and on
+         + every lock/refill.                                            
+      16 +constexpr int kSaveEveryTicks = 15;                            
+      17  } // namespace
+      18  
+      19  ProcessMonitor::ProcessMonitor(QObject* parent)
+     ...
+      21  {
+      22  }
+      23  
+      24 +ProcessMonitor::~ProcessMonitor()                              
+      25 +{                                                              
+      26 +    saveUsage();                                               
+      27 +}                                                              
+      28 +                                                               
+      29  void ProcessMonitor::start()
+      30  {
+      31      m_timer = new QTimer(this);
+     ...
+       41      QList<Entry> next;
+       42      next.reserve(items.size());
+       43      for (const WatchItem& item : items) {
+       35 -        Entry entry{item, qint64(item.limitSecs) * 1000, false
+          -};                                                            
+       36 -                                                              
+       37 -        // Keep progress for apps already being tracked: time 
+          -already used                                                  
+       38 -        // carries over when the budget changes.              
+       39 -        const QString key = exeKey(item.exeName);             
+       44 +        Entry entry{item, false};                             
+       45          for (const Entry& old : std::as_const(m_entries)) {
+       41 -            if (exeKey(old.item.exeName) != key)              
+       42 -                continue;                                     
+       43 -            const qint64 usedMs = qint64(old.item.limitSecs) *
+          - 1000 - old.remainingMs;                                      
+       44 -            entry.remainingMs = std::max<qint64>(0, entry.rema
+          -iningMs - usedMs);                                            
+       45 -            entry.locked = old.locked;                        
+       46 -            break;                                            
+       46 +            if (exeKey(old.item.exeName) == exeKey(item.exeNam
+          +e)) {                                                         
+       47 +                entry.locked = old.locked;                    
+       48 +                break;                                        
+       49 +            }                                                 
+       50          }
+       51          next.append(entry);
+       52      }
+       53      m_entries = std::move(next);
+       54  }
+       55  
+       56 +ProcessMonitor::Usage& ProcessMonitor::usageFor(const QString&
+          + key)                                                         
+       57 +{                                                             
+       58 +    auto it = m_usage.find(key);                              
+       59 +    if (it == m_usage.end()) {                                
+       60 +        QSettings settings;                                   
+       61 +        settings.beginGroup("usage/" + key);                  
+       62 +        Usage usage;                                          
+       63 +        usage.usedMs = settings.value("usedMs", 0).toLongLong(
+          +);                                                            
+       64 +        usage.windowStart = settings.value("windowStart", 0).t
+          +oLongLong();                                                  
+       65 +        it = m_usage.insert(key, usage);                      
+       66 +    }                                                         
+       67 +    return *it;                                               
+       68 +}                                                             
+       69 +                                                              
+       70 +void ProcessMonitor::saveUsage()                              
+       71 +{                                                             
+       72 +    if (!m_usageDirty)                                        
+       73 +        return;                                               
+       74 +    QSettings settings;                                       
+       75 +    for (auto it = m_usage.cbegin(); it != m_usage.cend(); ++i
+          +t) {                                                          
+       76 +        settings.beginGroup("usage/" + it.key());             
+       77 +        settings.setValue("usedMs", it->usedMs);              
+       78 +        settings.setValue("windowStart", it->windowStart);    
+       79 +        settings.endGroup();                                  
+       80 +    }                                                         
+       81 +    m_usageDirty = false;                                     
+       82 +    m_ticksSinceSave = 0;                                     
+       83 +}                                                             
+       84 +                                                              
+       85  void ProcessMonitor::tick()
+       86  {
+       87      const qint64 elapsed = std::min(m_clock.restart(), kMaxDra
+           inMs);
+       88 +    const qint64 now = QDateTime::currentSecsSinceEpoch();    
+       89      const auto processes = winutil::snapshotProcesses();
+       90 +    bool saveNow = false;                                     
+       91  
+       92      QList<WatchStatus> statuses;
+       93      statuses.reserve(m_entries.size());
+       94  
+       95      for (Entry& e : m_entries) {
+       96 +        const QString key = exeKey(e.item.exeName);           
+       97          const qint64 limitMs = qint64(e.item.limitSecs) * 1000
+           ;
+       63 -        const QList<quint32> pids = processes.value(exeKey(e.i
+          -tem.exeName));                                                
+       98 +        const QList<quint32> pids = processes.value(key);     
+       99          const bool running = !pids.isEmpty();
+      100          const bool hasWindow = running && winutil::findMainWin
+           dow(pids).has_value();
+      101 +        Usage& usage = usageFor(key);                         
+      102  
+      103 +        // Cooldown over: refill, and lift the lock even if th
+          +e app is still open.                                          
+      104 +        if (usage.windowStart != 0 && now >= usage.windowStart
+          + + kRefillCooldownSecs) {                                     
+      105 +            usage = Usage{};                                  
+      106 +            m_usageDirty = saveNow = true;                    
+      107 +            if (e.locked) {                                   
+      108 +                e.locked = false;                             
+      109 +                emit unlocked(e.item.exeName);                
+      110 +            }                                                 
+      111 +        }                                                     
+      112 +                                                              
+      113          if (e.locked) {
+      114              if (!hasWindow) {
+      115                  e.locked = false;
+       70 -                e.remainingMs = limitMs;                      
+       71 -                emit targetClosed(e.item.exeName);            
+      116 +                emit unlocked(e.item.exeName);                
+      117              }
+      118          } else if (hasWindow) {
+       74 -            e.remainingMs -= elapsed;                         
+       75 -            if (e.remainingMs <= 0) {                         
+       76 -                e.remainingMs = 0;                            
+      119 +            if (usage.windowStart == 0)                       
+      120 +                usage.windowStart = now;                      
+      121 +            usage.usedMs = std::min(usage.usedMs + elapsed, st
+          +d::max(limitMs, usage.usedMs));                               
+      122 +            m_usageDirty = true;                              
+      123 +            if (usage.usedMs >= limitMs) {                    
+      124                  e.locked = true;
+       78 -                emit timeUp(e.item.exeName, pids);            
+      125 +                saveNow = true;                               
+      126 +                emit timeUp(e.item.exeName, pids, usage.window
+          +Start + kRefillCooldownSecs);                                 
+      127              }
+       80 -        } else if (!running) {                                
+       81 -            e.remainingMs = limitMs; // process gone: session 
+          -over                                                          
+      128          }
+       83 -        // running without a window: paused, budget kept      
+      129 +        // Not running, or running without a window: paused, n
+          +othing refills.                                               
+      130  
+      131 +        const qint64 remainingMs = std::max<qint64>(0, limitMs
+          + - usage.usedMs);                                             
+      132          WatchStatus status;
+      133          status.exeName = e.item.exeName;
+      134          status.limitSecs = e.item.limitSecs;
+       88 -        status.remainingSecs = int((e.remainingMs + 999) / 100
+          -0);                                                           
+      135 +        status.remainingSecs = int((remainingMs + 999) / 1000)
+          +;                                                             
+      136 +        status.refillAt = usage.windowStart ? usage.windowStar
+          +t + kRefillCooldownSecs : 0;                                  
+      137          status.pids = pids;
+      138          status.state = e.locked   ? WatchState::Locked
+      139                       : hasWindow  ? WatchState::Active
+     ...
+      142          statuses.append(status);
+      143      }
+      144  
+      145 +    if (saveNow || ++m_ticksSinceSave >= kSaveEveryTicks)     
+      146 +        saveUsage();                                          
+      147 +                                                              
+      148      emit statusUpdated(statuses);
+      149  }
+
+● Now the UI side: the overlay and cards need to show when the budget refills.
+
+● Bash(python - <<'EOF'
+      import re…)
+  ⎿  src/MainWindow.cpp:64:    connect(m_monitor, &ProcessMonitor::unlocked
+     , this, &MainWindow::onUnlocked);
+     src/MainWindow.cpp:345:void MainWindow::onTimeUp(const QString& exeNam
+     … +9 lines (ctrl+o to expand)
+
+● Now the card: a "Refills in …" line, and a "Used up" state for spent apps that
+  aren't open.
+
+● Bash(python - <<'EOF'
+      def sub(p, a, b):…)
+  ⎿  build-exit=0
+  ⎿  (timeout 10m)
+
+● Build succeeded with no warnings. Next I'll test the loophole by seeding
+  Notepad with a 1-minute budget (55 seconds used), letting it lock, then
+  closing and reopening Notepad to confirm it locks again immediately.
+
+● PowerShell($k='HKCU:\Software\FocusLock\FocusLock'
+            New-Item -Path "$k\watchlist\1" -Force | Out-Null…)
+  ⎿  seeded at 1791671148
+
+● Bash(sleep 9; S="C:/Users/Toshit/AppData/Local/Temp/claude/C--Users-Toshit-Des
+      ktop-Experiments/9eebfe11-80e0-4706-9587-48b340d7ec32/scratchpad";
+      powershell -NoProfil…)
+  ⎿  Running in the background (↓ to manage)
+
+● The test sequence is running (about 20 seconds); I'll check the screenshots
+  when it finishes.
+
+✻ Cogitated for 2m 19s · done 3:55 AM
+
+● Background command "Capture lock, close Notepad, reopen and capture again"
+completed (exit code 0)
+
+  Read 3 files (ctrl+o to expand)
+
+● Confirmed the reopened Notepad locks immediately again. Next, I'll verify
+  FocusLock survives a restart, then test the refill by setting the window to
+  end 15 seconds from now.
+
+● PowerShell($k='HKCU:\Software\FocusLock\FocusLock\usage\notepad.exe'
+            taskkill /IM FocusLock.exe /F | Out-Null…)
+  ⎿  persisted: usedMs windowStart
+     ------ -----------
+      60000  1791667548
+
+● Bash(S="C:/Users/Toshit/AppData/Local/Temp/claude/C--Users-Toshit-Desktop-Expe
+      riments/9eebfe11-80e0-4706-9587-48b340d7ec32/scratchpad"; sleep 5;
+      powershell -NoProfil…)
+  ⎿  Running in the background (↓ to manage)
+
+● Usage survived the restart (60,000 ms used was saved to disk). Waiting about
+  20 seconds for the refill screenshots.
+
+✻ Cogitated for 21s · done 3:56 AM
+
+● Background command "Screenshot before and after the refill moment" completed
+(exit code 0)
+
+  Read 2 files (ctrl+o to expand)
+
+● Everything checks out. Cleaning up the test state and updating the README's
+  rules.
+
+● Bash(taskkill //IM FocusLock.exe //F >/dev/null; powershell -NoProfile
+      -Command "(Get-Process Notepad -EA SilentlyContinue).CloseMainWindow() |
+      Out-Null; Remove-Item…)
+  ⎿  False
+       File "<stdin>", line 4
+         new='''Budget rules:
+     … +19 lines (ctrl+o to expand)
+
+● Update(README.md)
+  ⎿  Added 7 lines, removed 3 lines
+      30  | `src/MainWindow.*`, `src/WatchCard.*` | Watchlist UI, tray ic
+          on, settings (`QSettings`) |
+      31  | `src/Theme.h` | Dark palette, stylesheet, and the programmati
+          c app icon |
+      32  
+      33 -Session rules:                                                 
+      33 +Budget rules:                                                  
+      34  - The budget only counts down while the app has a visible top-l
+          evel window.
+      35 -- When the app's process exits, the session ends and the budget
+         - refills.                                                      
+      36 -- Esc and Alt+F4 can't dismiss the overlay. It lifts when the p
+         -rocess exits or its last window closes.                        
+      35 +- It refills **24 hours after it first starts counting down** (
+         +`kRefillCooldownSecs` in                                       
+      36 +  `src/WatchTypes.h`). Closing the app doesn't refill it, so re
+         +opening a spent app locks it again immediately.                
+      37 +- Usage is saved under `HKCU\Software\FocusLock\FocusLock\usage
+         +`, so restarting FocusLock or                                  
+      38 +  removing and re-adding an app doesn't reset it.              
+      39 +- Esc and Alt+F4 can't dismiss the overlay. It lifts when the p
+         +rocess exits, its last window                                  
+      40 +  closes, or the budget refills.                               
+      41  - **Close <app>** sends `WM_CLOSE`, so the app can still ask to
+           save. The overlay shrinks to a
+      42    card at the top edge for 15 s so that prompt stays reachable.
+      43  - Closing the main window sends it to the tray, and timers keep
+           running. Quit from the tray menu.
+
+● Update(README.md)
+  ⎿  Added 1 line, removed 1 line
+      24  
+      25  | File | Role |
+      26  |---|---|
+      27 -| `src/ProcessMonitor.*` | Worker-thread engine. Each second it
+         - calls `CreateToolhelp32Snapshot`, counts down budgets, and emi
+         -ts `timeUp` / `targetClosed` |                                 
+      27 +| `src/ProcessMonitor.*` | Worker-thread engine. Each second it
+         + calls `CreateToolhelp32Snapshot`, counts down and persists bud
+         +gets, and emits `timeUp` / `unlocked` |                        
+      28  | `src/WinUtil.*` | Win32 helpers: process snapshot, `EnumWindo
+          ws` main-window lookup, `GetWindowRect` (refined with DWM frame
+           bounds), topmost placement, `WM_CLOSE`, exe description |
+      29  | `src/OverlayDialog.*` | Frameless `WindowStaysOnTopHint` lock
+           screen that follows the target window every 200 ms |
+      30  | `src/MainWindow.*`, `src/WatchCard.*` | Watchlist UI, tray ic
+          on, settings (`QSettings`) |
+
+● The loophole is closed. Each app's budget now refills 24 hours after it first
+  starts counting down, and closing an app no longer gives the time back.
+
+  How it works now:
+  - Spent apps stay locked: if an app's budget is used up, reopening it brings
+    the lock screen back straight away. The lock screen and the app's card both
+    show when it refills (e.g. "Refills in 23 h").
+  - Used time is kept between closes: use 20 of 30 minutes, close the app,
+    reopen it, and you have 10 minutes left.
+  - Usage is saved to disk: restarting FocusLock, or removing an app and adding
+    it back, doesn't reset it.
+  - Refill lifts the lock: when the 24 hours are up, the lock lifts even if the
+    app is open.
+
+  Tested with Notepad and a 1-minute budget:
+  - Reopening: it locked, I closed it and the card showed "Used up · Refills in
+    23 h". I reopened it and it was locked again immediately.
+  - Restart: after I killed and restarted FocusLock, Notepad was still locked.
+  - Refill: I moved the refill time to 15 seconds away. The lock lifted while
+    Notepad was open, and a new 24-hour window started.
+
+  The main changes are in src/ProcessMonitor.cpp, and the 24-hour value is one
+  constant, kRefillCooldownSecs in src/WatchTypes.h. The build has no warnings,
+  I removed the test settings from the registry, and the README now describes
+  these rules.
+
+  Two loopholes remain, in case you want them closed later:
+  - Raising the limit: turning up an app's limit in FocusLock gives more time
+    right away.
+  - System clock: moving the Windows clock forward makes budgets refill early.
+
+✻ Brewed for 29s · done 3:57 AM
+
+❯ about the raising the limit while the app is being clocked loophole. make     
+  sure that user cannot interact with raising the time limit nor can the user   
+  decrease the time.                                                            
+  As for the system clock loop hole. let the cooldown period independent if     
+  clock system, like set some sort of timer which works independent to clock    
+  system. So even after User tries to make clock go forward, the timer would    
+  not change at all.                                                            
+
+● Here's the plan for both loopholes.
+
+  Limit lock: once an app's 24-hour window starts (its first second of use), its
+  limit is frozen until the refill. The −, + and minutes field are disabled,
+  and the frozen limit is saved with the app's usage. Removing an app and adding
+  it back would get round the lock with a fresh 30-minute default. It's the
+  same loophole in another form, so I'll also disable the remove button during
+  the window. That's an addition you didn't ask for, so I'll point it out at the
+  end too.
+
+  Clock-independent cooldown: FocusLock will keep its own time counter that
+  never reads the system clock.
+  - While Windows is running: the counter advances with GetTickCount64. That's
+    the time since boot; it includes sleep and ignores clock changes.
+  - Across reboots: off time can't be measured locally, so the counter takes the
+    true time from the Date header of HTTPS servers (Google, Cloudflare,
+    Microsoft) and credits the gap. If it can't reach them, it credits nothing,
+    so you can't skip time.
+
+● Write(src\TrustedClock.h)
+  ⎿  Wrote 46 lines to src\TrustedClock.h
+       1 #pragma once
+       2 
+       3 #include <QObject>
+       5 
+       6 class QNetworkAccessManager;
+       7 
+       8 // FocusLock's own time line for budget cooldowns, independent o
+       9 // so moving the Windows clock forward can't make budgets refill
+          early.
+      10 //
+     … +45 lines (ctrl+o to expand)
+
+● Write(src\TrustedClock.cpp)
+  ⎿  Wrote 142 lines to src\TrustedClock.cpp
+       1 #include "TrustedClock.h"
+       2 
+       3 #include "WinUtil.h"
+       4 
+       5 #include <QDateTime>
+       6 #include <QNetworkAccessManager>
+       7 #include <QNetworkReply>
+       8 #include <QNetworkRequest>
+       9 #include <QSettings>
+      10 #include <QUrl>
+     … +145 lines (ctrl+o to expand)
+● Update(src\WinUtil.h)
+  ⎿  Added 7 lines
+      35  // Politely asks every top-level window of the pids to close (W
+          M_CLOSE).
+      36  void requestClose(const QList<quint32>& pids);
+      37  
+      38 +// Milliseconds since boot (GetTickCount64). Monotonic, include
+         +s sleep, and                                                   
+      39 +// unaffected by changes to the system clock.                  
+      40 +quint64 tickCountMs();                                         
+      41 +                                                               
+      42 +// Windows' boot counter (increments every boot); 0 if unavaila
+         +ble.                                                           
+      43 +quint32 bootId();                                              
+      44 +                                                               
+      45  // FileDescription from the exe's version resource, e.g. "Googl
+          e Chrome". Empty if absent.
+      46  QString fileDescription(const QString& exePath);
+      47  
+
+● Update(src\WinUtil.cpp)
+  ⎿  Added 16 lines
+      158      forEachAppWindow(pids, [](HWND hwnd) { PostMessageW(hwnd, 
+           WM_CLOSE, 0, 0); });
+      159  }
+      160  
+      161 +quint64 tickCountMs()                                         
+      162 +{                                                             
+      163 +    return GetTickCount64();                                  
+      164 +}                                                             
+      165 +                                                              
+      166 +quint32 bootId()                                              
+      167 +{                                                             
+      168 +    DWORD value = 0;                                          
+      169 +    DWORD size = sizeof(value);                               
+      170 +    const LSTATUS status = RegGetValueW(                      
+      171 +        HKEY_LOCAL_MACHINE,                                   
+      172 +        L"SYSTEM\\CurrentControlSet\\Control\\Session Manager\
+          +\Memory Management\\PrefetchParameters",                      
+      173 +        L"BootId", RRF_RT_REG_DWORD, nullptr, &value, &size); 
+      174 +    return status == ERROR_SUCCESS ? value : 0;               
+      175 +}                                                             
+      176 +                                                              
+      177  QString fileDescription(const QString& exePath)
+      178  {
+      179      const std::wstring path = exePath.toStdWString();
+
+● Bash(python - <<'PYEOF'
+      def sub(p, a, b):…)
+  ⎿  16:find_package(Qt6 6.8 REQUIRED COMPONENTS Widgets Network)
+     25:    src/TrustedClock.h
+     26:    src/TrustedClock.cpp
+     … +2 lines (ctrl+o to expand)
+
+● Now the types and the monitor, which switch from wall-clock time to the
+  trusted clock.
+
+● Bash(python - <<'PYEOF'
+      def sub(p, a, b):…)
+  ⎿  (No output)
+
+● Write(src\ProcessMonitor.h)
+  ⎿  Added 12 lines, removed 6 lines
+       7  #include <QObject>
+       8  
+       9  class QTimer;
+      10 +class TrustedClock;                                            
+      11  
+      12  // Lives on a worker thread. Once a second it snapshots the pro
+          cess list,
+      13  // counts down the budget of every watched app that has a visib
+          le window,
+     ...
+      15  //
+      16  // Budget rules:
+      17  //  - The budget only drains while the app has a visible top-le
+          vel window.
+      17 -//  - It refills kRefillCooldownSecs after it first started dra
+         -ining. Closing the                                             
+      18 -//    app does not refill it, so reopening a spent app locks it
+         - again immediately.                                            
+      18 +//  - It refills kRefillCooldownSecs after it first started dra
+         +ining, measured on                                             
+      19 +//    TrustedClock rather than the system clock. Closing the ap
+         +p does not refill it,                                          
+      20 +//    so reopening a spent app locks it again immediately.     
+      21 +//  - For that same window the limit is frozen at its value whe
+         +n draining started;                                            
+      22 +//    later edits to the watchlist don't apply until the refill
+         +.                                                              
+      23  //  - The lock lifts when the process exits or its last window 
+          closes, or when
+      24  //    the budget refills.
+      25  //  - Usage is persisted per exe name, so restarting FocusLock 
+          or removing and
+     ...
+      37  
+      38  signals:
+      39      void statusUpdated(const QList<WatchStatus>& statuses);
+      36 -    void timeUp(const QString& exeName, const QList<quint32>& p
+         -ids, qint64 refillAt);                                         
+      40 +    void timeUp(const QString& exeName, const QList<quint32>& p
+         +ids, qint64 refillInSecs);                                     
+      41      void unlocked(const QString& exeName);
+      42  
+      43  private:
+      44      struct Usage {
+      45          qint64 usedMs = 0;
+      42 -        qint64 windowStart = 0; // epoch seconds of the first d
+         -rain; 0 = full budget                                          
+      46 +        qint64 windowStartMs = -1; // TrustedClock time of the 
+         +first drain; -1 = full budget                                  
+      47 +        int limitSecs = 0;         // limit frozen for this win
+         +dow                                                            
+      48 +        bool inWindow() const { return windowStartMs >= 0; }   
+      49      };
+      50  
+      51      struct Entry {
+     ...
+      55  
+      56      void tick();
+      57      Usage& usageFor(const QString& key);
+      52 -    void saveUsage();                                          
+      58 +    void save();                                               
+      59  
+      60      QList<Entry> m_entries;
+      61      QHash<QString, Usage> m_usage; // keyed by exeKey(); outliv
+          es watchlist removals
+      62 +    TrustedClock* m_trustedClock = nullptr;                    
+      63      QTimer* m_timer = nullptr;
+      64      QElapsedTimer m_clock;
+      65      int m_ticksSinceSave = 0;
+      59 -    bool m_usageDirty = false;                                 
+      66  };
+
+● Write(src\ProcessMonitor.cpp)
+  ⎿  Added 33 lines, removed 22 lines
+      1  #include "ProcessMonitor.h"
+      2  
+      3 +#include "TrustedClock.h"                                       
+      4  #include "WinUtil.h"
+      5  
+      5 -#include <QDateTime>                                            
+      6  #include <QSettings>
+      7  #include <QTimer>
+      8  
+     ...
+      12  constexpr int kTickMs = 1000;
+      13  // Cap per-tick drain so waking from sleep/hibernate doesn't in
+          stantly lock everything.
+      14  constexpr qint64 kMaxDrainMs = 5000;
+      15 -// Usage is flushed to disk this often while it changes, and on
+         - every lock/refill.                                            
+      15 +// Usage and the clock are flushed to disk this often, and on e
+         +very lock/refill.                                              
+      16  constexpr int kSaveEveryTicks = 15;
+      17 +constexpr qint64 kRefillCooldownMs = kRefillCooldownSecs * 1000
+         +;                                                              
+      18  } // namespace
+      19  
+      20  ProcessMonitor::ProcessMonitor(QObject* parent)
+     ...
+      24  
+      25  ProcessMonitor::~ProcessMonitor()
+      26  {
+      26 -    saveUsage();                                               
+      27 +    if (m_trustedClock)                                        
+      28 +        save();                                                
+      29  }
+      30  
+      31  void ProcessMonitor::start()
+      32  {
+      33 +    m_trustedClock = new TrustedClock(this);                   
+      34 +    m_trustedClock->start();                                   
+      35 +                                                               
+      36      m_timer = new QTimer(this);
+      37      m_timer->setInterval(kTickMs);
+      38      m_timer->setTimerType(Qt::PreciseTimer);
+     ...
+      66          settings.beginGroup("usage/" + key);
+      67          Usage usage;
+      68          usage.usedMs = settings.value("usedMs", 0).toLongLong()
+          ;
+      64 -        usage.windowStart = settings.value("windowStart", 0).to
+         -LongLong();                                                    
+      69 +        usage.windowStartMs = settings.value("windowStartMs", -
+         +1).toLongLong();                                               
+      70 +        usage.limitSecs = settings.value("limitSecs", 0).toInt(
+         +);                                                             
+      71          it = m_usage.insert(key, usage);
+      72      }
+      73      return *it;
+      74  }
+      75  
+      70 -void ProcessMonitor::saveUsage()                               
+      76 +void ProcessMonitor::save()                                    
+      77  {
+      72 -    if (!m_usageDirty)                                         
+      73 -        return;                                                
+      78      QSettings settings;
+      79      for (auto it = m_usage.cbegin(); it != m_usage.cend(); ++it
+          ) {
+      80          settings.beginGroup("usage/" + it.key());
+      81          settings.setValue("usedMs", it->usedMs);
+      78 -        settings.setValue("windowStart", it->windowStart);     
+      82 +        settings.setValue("windowStartMs", it->windowStartMs); 
+      83 +        settings.setValue("limitSecs", it->limitSecs);         
+      84          settings.endGroup();
+      85      }
+      81 -    m_usageDirty = false;                                      
+      86 +    m_trustedClock->save();                                    
+      87      m_ticksSinceSave = 0;
+      88  }
+      89  
+      90  void ProcessMonitor::tick()
+      91  {
+      92      const qint64 elapsed = std::min(m_clock.restart(), kMaxDrai
+          nMs);
+      88 -    const qint64 now = QDateTime::currentSecsSinceEpoch();     
+      93 +    const qint64 now = m_trustedClock->nowMs();                
+      94      const auto processes = winutil::snapshotProcesses();
+      95      bool saveNow = false;
+      96  
+     ...
+       99  
+      100      for (Entry& e : m_entries) {
+      101          const QString key = exeKey(e.item.exeName);
+       97 -        const qint64 limitMs = qint64(e.item.limitSecs) * 1000
+          -;                                                             
+      102          const QList<quint32> pids = processes.value(key);
+      103          const bool running = !pids.isEmpty();
+      104          const bool hasWindow = running && winutil::findMainWin
+           dow(pids).has_value();
+      105          Usage& usage = usageFor(key);
+      106  
+      107          // Cooldown over: refill, and lift the lock even if th
+           e app is still open.
+      104 -        if (usage.windowStart != 0 && now >= usage.windowStart
+          - + kRefillCooldownSecs) {                                     
+      108 +        if (usage.inWindow() && now >= usage.windowStartMs + k
+          +RefillCooldownMs) {                                           
+      109              usage = Usage{};
+      106 -            m_usageDirty = saveNow = true;                    
+      110 +            saveNow = true;                                   
+      111              if (e.locked) {
+      112                  e.locked = false;
+      113                  emit unlocked(e.item.exeName);
+     ...
+      120                  emit unlocked(e.item.exeName);
+      121              }
+      122          } else if (hasWindow) {
+      119 -            if (usage.windowStart == 0)                       
+      120 -                usage.windowStart = now;                      
+      121 -            usage.usedMs = std::min(usage.usedMs + elapsed, st
+          -d::max(limitMs, usage.usedMs));                               
+      122 -            m_usageDirty = true;                              
+      123 +            if (!usage.inWindow()) {                          
+      124 +                usage.windowStartMs = now;                    
+      125 +                usage.limitSecs = e.item.limitSecs;           
+      126 +                saveNow = true;                               
+      127 +            }                                                 
+      128 +            const qint64 limitMs = qint64(usage.limitSecs) * 1
+          +000;                                                          
+      129 +            usage.usedMs = std::min(usage.usedMs + elapsed, li
+          +mitMs);                                                       
+      130              if (usage.usedMs >= limitMs) {
+      131                  e.locked = true;
+      132                  saveNow = true;
+      126 -                emit timeUp(e.item.exeName, pids, usage.window
+          -Start + kRefillCooldownSecs);                                 
+      133 +                emit timeUp(e.item.exeName, pids,             
+      134 +                            (usage.windowStartMs + kRefillCool
+          +downMs - now + 999) / 1000);                                  
+      135              }
+      136          }
+      137          // Not running, or running without a window: paused, n
+           othing refills.
+      138  
+      131 -        const qint64 remainingMs = std::max<qint64>(0, limitMs
+          - - usage.usedMs);                                             
+      139 +        const int limitSecs = usage.inWindow() ? usage.limitSe
+          +cs : e.item.limitSecs;                                        
+      140 +        const qint64 remainingMs = std::max<qint64>(0, qint64(
+          +limitSecs) * 1000 - usage.usedMs);                            
+      141          WatchStatus status;
+      142          status.exeName = e.item.exeName;
+      134 -        status.limitSecs = e.item.limitSecs;                  
+      143 +        status.limitSecs = limitSecs;                         
+      144          status.remainingSecs = int((remainingMs + 999) / 1000)
+           ;
+      136 -        status.refillAt = usage.windowStart ? usage.windowStar
+          -t + kRefillCooldownSecs : 0;                                  
+      145 +        status.refillInSecs = usage.inWindow()                
+      146 +            ? std::max<qint64>(1, (usage.windowStartMs + kRefi
+          +llCooldownMs - now + 999) / 1000)                             
+      147 +            : 0;                                              
+      148          status.pids = pids;
+      149          status.state = e.locked   ? WatchState::Locked
+      150                       : hasWindow  ? WatchState::Active
+     ...
+      154      }
+      155  
+      156      if (saveNow || ++m_ticksSinceSave >= kSaveEveryTicks)
+      146 -        saveUsage();                                          
+      157 +        save();                                               
+      158  
+      159      emit statusUpdated(statuses);
+      160  }
+
+● Now the overlay, main window and card.
+
+  Read 1 file (ctrl+o to expand)
+
+● Bash(python - <<'PYEOF'
+      def sub(p, a, b):…)
+  ⎿  328:void MainWindow::onStatus(const QList<WatchStatus>& statuses)
+     329-{
+     330-    int active = 0, locked = 0;
+     … +23 lines (ctrl+o to expand)
+
+● Update(src\MainWindow.cpp)
+  ⎿  Added 15 lines
+      328  void MainWindow::onStatus(const QList<WatchStatus>& statuses)
+      329  {
+      330      int active = 0, locked = 0;
+      331 +    bool limitsSynced = false;                                
+      332      for (const WatchStatus& status : statuses) {
+      333          const QString key = exeKey(status.exeName);
+      334          WatchCard* card = m_cards.value(key);
+      335          if (!card)
+      336              continue; // removed since this tick started
+      337  
+      338 +        // While a budget window runs, the monitor's frozen li
+          +mit wins (e.g. after the                                      
+      339 +        // app was re-added with the default limit).          
+      340 +        if (status.refillInSecs > 0) {                        
+      341 +            m_frozen.insert(key);                             
+      342 +            for (WatchItem& item : m_items) {                 
+      343 +                if (exeKey(item.exeName) == key && item.limitS
+          +ecs != status.limitSecs) {                                    
+      344 +                    item.limitSecs = status.limitSecs;        
+      345 +                    limitsSynced = true;                      
+      346 +                }                                             
+      347 +            }                                                 
+      348 +        } else {                                              
+      349 +            m_frozen.remove(key);                             
+      350 +        }                                                     
+      351 +                                                              
+      352          card->setStatus(status);
+      353          active += status.state == WatchState::Active;
+      354          locked += status.state == WatchState::Locked;
+
+● Update(src\MainWindow.cpp)
+  ⎿  Added 2 lines
+      359      }
+      360      m_statActive->setText(QString::number(active));
+      361      m_statLocked->setText(QString::number(locked));
+      362 +    if (limitsSynced)                                         
+      363 +        saveSettings();                                       
+      364  }
+      365  
+      366  void MainWindow::onTimeUp(const QString& exeName, const QList<
+           quint32>& pids, qint64 refillInSecs)
+
+● Bash(export PATH="/c/Qt/Tools/mingw1310_64/bin:/c/Qt/Tools/CMake_64/bin:/c/Qt/
+      Tools/Ninja:$PATH"; taskkill //IM FocusLock.exe //F >/dev/null 2>&1; cmake
+      -S . -B buil…)
+  ⎿  build-exit=0
+  ⎿  (timeout 10m)
+
+● Clean build. The system clock is now read in only one place: TrustedClock,
+  which parses the network Date header. Next, a live test of the frozen controls
+  and the network sync.
+
+● PowerShell($k='HKCU:\Software\FocusLock\FocusLock'
+            Remove-Item $k -Recurse -Force -ErrorAction SilentlyContinue…)
+  ⎿  clock:
+     … +15 lines (ctrl+o to expand)
+
+  Read 1 file (ctrl+o to expand)
+
+● The frozen controls and network time sync both work as expected. Next I'll
+  test the reboot scenario by simulating a new boot ID with 2 hours of downtime,
+  expecting FocusLock to credit that time and show "Refills in 22 h" after
+  restart.
+
+● PowerShell($k='HKCU:\Software\FocusLock\FocusLock\clock'
+            taskkill /IM FocusLock.exe /F | Out-Null…)
+  ⎿  before relaunch nowMs=16079
+     after relaunch nowMs=7221641 bootId=253
+
+  Read 1 file (ctrl+o to expand)
+
+● The reboot test worked—FocusLock credited the ~2 hours of network time
+  correctly and the card now shows "Refills in 22 h." I'll clean up and update
+  the README next.
+
+● PowerShell(taskkill /IM FocusLock.exe /F | Out-Null; (Get-Process Notepad -EA
+            SilentlyContinue).CloseMainWindow() | Out-Null; Remove-Item
+            'HKCU:\Software\FocusLock' -Recur…)
+  ⎿  False
+
+● Update(README.md)
+  ⎿  Added 6 lines
+      34  - The budget only counts down while the app has a visible top-l
+          evel window.
+      35  - It refills **24 hours after it first starts counting down** (
+          `kRefillCooldownSecs` in
+      36    `src/WatchTypes.h`). Closing the app doesn't refill it, so re
+          opening a spent app locks it again immediately.
+      37 +- While that 24 h window runs, the app's limit is frozen. You c
+         +an't raise or lower it, or remove                              
+      38 +  the app, until the budget refills.                           
+      39  - Usage is saved under `HKCU\Software\FocusLock\FocusLock\usage
+          `, so restarting FocusLock or
+      40    removing and re-adding an app doesn't reset it.
+      41 +- The cooldown never reads the system clock. `src/TrustedClock.
+         +*` keeps its own time line:                                    
+      42 +  `GetTickCount64` within a boot (it counts sleep and ignores c
+         +lock changes), and across reboots                              
+      43 +  it credits the downtime using the `Date` header of HTTPS serv
+         +ers (Google, Cloudflare, Microsoft).                           
+      44 +  If it can't reach the network, no downtime is credited, so th
+         +e cooldown can run slow but never fast.                        
+      45  - Esc and Alt+F4 can't dismiss the overlay. It lifts when the p
+          rocess exits, its last window
+      46    closes, or the budget refills.
+      47  - **Close <app>** sends `WM_CLOSE`, so the app can still ask to
+           save. The overlay shrinks to a
+
+● Update(README.md)
+  ⎿  Added 1 line
+      25  | File | Role |
+      26  |---|---|
+      27  | `src/ProcessMonitor.*` | Worker-thread engine. Each second it
+           calls `CreateToolhelp32Snapshot`, counts down and persists bud
+          gets, and emits `timeUp` / `unlocked` |
+      28 +| `src/TrustedClock.*` | Time line for cooldowns that the syste
+         +m clock can't change (tick counter plus network time sync) |   
+      29  | `src/WinUtil.*` | Win32 helpers: process snapshot, `EnumWindo
+          ws` main-window lookup, `GetWindowRect` (refined with DWM frame
+           bounds), topmost placement, `WM_CLOSE`, exe description |
+      30  | `src/OverlayDialog.*` | Frameless `WindowStaysOnTopHint` lock
+           screen that follows the target window every 200 ms |
+      31  | `src/MainWindow.*`, `src/WatchCard.*` | Watchlist UI, tray ic
+          on, settings (`QSettings`) |
+
+● Both loopholes are closed, and the build has no warnings.
+
+  Limit lock: once an app starts using its budget, its limit can't be raised or
+  lowered until the budget refills. The −, + and minutes field are greyed out,
+  and the card says "Refills in 24 h · limit locked until then". Before first
+  use you can still change the limit freely. I also disabled the ✕ remove button
+  during that time, because removing and re-adding the app would have reset it
+  to a new 30-minute limit. Even if an app gets re-added, FocusLock restores the
+  frozen limit it saved.
+
+  Clock-proof cooldown: the 24-hour cooldown no longer reads the system clock.
+  The new src/TrustedClock.* keeps its own count of time:
+  - While Windows is running: it uses GetTickCount64, the time since boot. It
+    includes sleep, and changing the Windows clock has no effect on it.
+  - After a reboot: the time the PC was off can't be measured locally. FocusLock
+    checks the real time against Google, Cloudflare or Microsoft and credits
+    the gap. With no network it credits nothing, so the cooldown can only run
+    slow, never fast. This means FocusLock now sends a small request to one of
+    those sites every 30 minutes.
+
+  Tested:
+  - Frozen controls: the controls greyed out and the remove button was disabled
+    as soon as Notepad started using its budget.
+  - Network sync: it succeeded within a second of launch.
+  - Simulated reboot: I faked a reboot with 2 hours of downtime. FocusLock
+    credited 7,205 seconds and the card went from "Refills in 24 h" to "22 h".
+
+  I couldn't test moving the Windows clock forward, because that needs admin
+  rights. But the only place the cooldown code reads the system clock now is
+  where it parses the network time, so a clock change can't affect it. To try it
+  yourself, start an app's budget, move the clock forward a day as admin, and
+  the "Refills in" time won't change.
+
+  I removed the test settings afterwards, and the README is updated.
+
+  The biggest remaining gap is that you can still quit FocusLock from the tray
+  icon, and then nothing is enforced.
+
+✻ Baked for 5m 16s · done 4:09 AM
+❯ how do you suggest we fill out this gap (one very short paragraph answer)     
+
+● I'd move the tracking and enforcement into a Windows service that runs as
+  SYSTEM, starts automatically at boot, and restarts itself if killed.
+  FocusLock's window would become just a front end that talks to the service,
+  and the tray's Quit would close only that window. A standard Windows user
+  can't stop or kill a SYSTEM service, but an admin account always can. So for
+  it to really hold, your day-to-day account should be a standard user, with the
+  admin password kept somewhere slightly inconvenient. That's the setup the old
+  C# version used.
+
+✻ Cooked for 4s · done 4:13 AM
+
+※ recap: We're building FocusLock, a Qt/C++ app that locks apps when their time budget runs out, and the last fix stopped budgets refilling early when the clock is changed. Next, decide whether to move enforcement into a Windows service so FocusLock can't simply be quit. (disable recaps in /config)

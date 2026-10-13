@@ -1,0 +1,26 @@
+# ninja log v6
+89	3887	8133743075488781	FocusLock_autogen/timestamp	20ab59fec582f6d4
+89	3887	8133743075488781	C:/Users/Toshit/Desktop/Experiments/FocusLockQt/build/FocusLock_autogen/timestamp	20ab59fec582f6d4
+89	3887	8133743075488781	FocusLock_autogen/mocs_compilation.cpp	20ab59fec582f6d4
+89	3887	8133743075488781	C:/Users/Toshit/Desktop/Experiments/FocusLockQt/build/FocusLock_autogen/mocs_compilation.cpp	20ab59fec582f6d4
+3973	22321	8133743079813903	CMakeFiles/FocusLock.dir/src/WatchCard.cpp.obj	2dbe7d38d18aafaf
+3945	23697	8133743079536367	CMakeFiles/FocusLock.dir/src/OverlayDialog.cpp.obj	616dff1aab1d0f33
+3926	25089	8133743079349348	CMakeFiles/FocusLock.dir/src/ProcessMonitor.cpp.obj	8d2d4e53bd87bfd0
+818	21695	8133732823985376	CMakeFiles/FocusLock.dir/src/WinUtil.cpp.obj	c8a6c83f250b3e79
+3907	28798	8133743079152128	CMakeFiles/FocusLock.dir/src/main.cpp.obj	9f7de30d27de2e53
+3890	28709	8133743078986131	CMakeFiles/FocusLock.dir/FocusLock_autogen/mocs_compilation.cpp.obj	287926ae1ed47d79
+3997	30762	8133743080060217	CMakeFiles/FocusLock.dir/src/MainWindow.cpp.obj	701170de4506957a
+30762	32145	8133743347706253	FocusLock.exe	5d97e89f4c9cf0c3
+115	5929	8133750757224291	FocusLock_autogen/timestamp	20ab59fec582f6d4
+115	5929	8133750757224291	FocusLock_autogen/mocs_compilation.cpp	20ab59fec582f6d4
+115	5929	8133750757224291	C:/Users/Toshit/Desktop/Experiments/FocusLockQt/build/FocusLock_autogen/timestamp	20ab59fec582f6d4
+115	5929	8133750757224291	C:/Users/Toshit/Desktop/Experiments/FocusLockQt/build/FocusLock_autogen/mocs_compilation.cpp	20ab59fec582f6d4
+5998	30552	8133750760573704	CMakeFiles/FocusLock.dir/src/TrustedClock.cpp.obj	85a0f22216c50124
+6065	32605	8133750761242472	CMakeFiles/FocusLock.dir/src/WatchCard.cpp.obj	76cbe8e8b5a7f8a
+6041	32809	8133750761006944	CMakeFiles/FocusLock.dir/src/OverlayDialog.cpp.obj	19b1c487f9e87bee
+6018	33172	8133750760776407	CMakeFiles/FocusLock.dir/src/ProcessMonitor.cpp.obj	545680d8cf6b7761
+5972	33550	8133750760312652	CMakeFiles/FocusLock.dir/src/WinUtil.cpp.obj	3b30fa7f31d6a229
+5951	37458	8133750760108981	CMakeFiles/FocusLock.dir/src/main.cpp.obj	e9246a6a099a49bd
+5933	38305	8133750759923457	CMakeFiles/FocusLock.dir/FocusLock_autogen/mocs_compilation.cpp.obj	a985f899bcc57241
+6087	42668	8133750761467795	CMakeFiles/FocusLock.dir/src/MainWindow.cpp.obj	5e0820d1270d5f6d
+42668	44257	8133751127277326	FocusLock.exe	ae377dbb085d40e4

@@ -1,5 +1,0 @@
-C:/Users/Toshit/Desktop/Experiments/FocusLockQt/build/CMakeFiles/FocusLock.dir
-C:/Users/Toshit/Desktop/Experiments/FocusLockQt/build/CMakeFiles/edit_cache.dir
-C:/Users/Toshit/Desktop/Experiments/FocusLockQt/build/CMakeFiles/rebuild_cache.dir
-C:/Users/Toshit/Desktop/Experiments/FocusLockQt/build/CMakeFiles/FocusLock_autogen_timestamp_deps.dir
-C:/Users/Toshit/Desktop/Experiments/FocusLockQt/build/CMakeFiles/FocusLock_autogen.dir
